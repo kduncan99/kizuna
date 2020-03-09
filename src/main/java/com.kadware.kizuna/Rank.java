@@ -33,5 +33,4 @@ public enum Rank {
         _highCardPoints = highCardPoints;
         _level = level;
     }
-
 }
