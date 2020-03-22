@@ -5,31 +5,28 @@
 package com.kadware.kizuna;
 
 public enum Suit {
-    CLUBS(0, "C", true, false),
-    DIAMONDS(1, "D", true, false),
-    HEARTS(2, "H", true, false),
-    SPADES(3, "S", true, false);
+    CLUBS("C", true, false, 0, 3),
+    DIAMONDS("D", true, false, 1, 2),
+    HEARTS("H", true, false, 2, 1 ),
+    SPADES("S", true, false, 3, 0);
 
-    public final int _ordinal;
     public final String _symbol;
     public final boolean _isMinor;
     public final boolean _isMajor;
+    public final int _bidOrder;
+    public final int _sortOrder;
 
     Suit(
-        int ordinal,
         String symbol,
         boolean isMinor,
-        boolean isMajor
+        boolean isMajor,
+        int bidOrder,
+        int sortOrder
     ) {
-        _ordinal = ordinal;
         _symbol = symbol;
         _isMinor = isMinor;
         _isMajor = isMajor;
-    }
-
-    public boolean isLessThan(
-        final Suit comp
-    ) {
-        return this._ordinal < comp._ordinal;
+        _bidOrder = bidOrder;
+        _sortOrder = sortOrder;
     }
 }

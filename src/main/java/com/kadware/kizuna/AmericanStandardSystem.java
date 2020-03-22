@@ -4,16 +4,23 @@
 
 package com.kadware.kizuna;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.util.Map;
-import java.util.Set;
+import java.util.List;
 
 public class AmericanStandardSystem implements BiddingSystem {
 
     public final boolean _fourCardMajors = true;
-    private final Logger LOGGER = LogManager.getLogger("AmericanStandardSystem");
+
+    private static class ScratchPad {
+        private int _hcPoints;
+        private float _quickTricks;
+        private boolean _reBiddableSuit;
+        private boolean _lengthInMajors;
+        private boolean _lengthInSpades;
+        private int _passes;
+        private boolean _thirdHand;
+        private boolean _fourthHand;
+        private Bid _leadDirect = null;
+    }
 
     /**
      * Recommends what the player holding the given hand should be at this point,
@@ -23,10 +30,11 @@ public class AmericanStandardSystem implements BiddingSystem {
     @Override
     public Bid recommendBid(
         final Hand hand,
-        final Board biddingBoard
+        final Board biddingBoard,
+        final List<String> commentary
     ) {
         if (biddingBoard._highestBid == null) {
-            return openingBid(hand, biddingBoard);
+            return openingBid(hand, biddingBoard, commentary);
         }
 
         return new Bid.Pass(hand._position);
@@ -38,98 +46,37 @@ public class AmericanStandardSystem implements BiddingSystem {
      */
     private Bid openingBid(
         final Hand hand,
-        final Board biddingBoard
+        final Board biddingBoard,
+        final List<String> commentary
     ) {
-        LOGGER.info(String.format("Checking opening bid for player %s", hand._position.toString()));
+        commentary.add(String.format("Checking opening bid for player %s", hand._position.toString()));
 
-        int hcPoints = hand.countHighCardPoints();
-        float quickTricks = hand.countQuickTricks();
-        boolean reBiddableSuit = hand.hasFiveCardSuit();
-        boolean lengthInMajors = hand.hasLengthInMajors();
-        boolean lengthInSpades = hand._cardsBySuit.get(Suit.SPADES).size() >= 5;
-        int passes = biddingBoard.getConsecutivePasses();
-        LOGGER.info(String.format("  HCP=%d QTricks=%f reBiddableSuit=%s lengthInMajors=%s position=%d",
-                                  hcPoints,
-                                  quickTricks,
-                                  reBiddableSuit,
-                                  lengthInMajors,
-                                  passes + 1));
+        ScratchPad sp = new ScratchPad();
+        sp._hcPoints = hand.countHighCardPoints();
+        sp._quickTricks = hand.countQuickTricks();
+        sp._reBiddableSuit = hand.hasLongSuit();
+        sp._lengthInMajors = hand.hasLengthInMajors();
+        sp._lengthInSpades = hand._distribution.getSuitSet(Suit.SPADES).size() >= 5;
+        sp._passes = biddingBoard.getConsecutivePasses();
+        sp._thirdHand = sp._passes == 2;
+        sp._fourthHand = sp._passes == 3;
+        commentary.add(String.format("HCP=%d QTricks=%f reBiddableSuit=%s lengthInMajors=%s position=%d 3rd=%s 4th=%s",
+                                     sp._hcPoints,
+                                     sp._quickTricks,
+                                     sp._reBiddableSuit,
+                                     sp._lengthInMajors,
+                                     sp._passes + 1,
+                                     sp._thirdHand,
+                                     sp._fourthHand));
 
-        //  Decide whether to open...
-        //      Open any hand with 14 or more HCP
-        //      Open any hand with 12-13 HCP, 2 quick tricks, and comfortable rebid (5-card suit)
-        //      Open any hand with 10-11 HCP, 2 quick tricks, comfortable rebid, and length in majors
-        //      Open 3rd position with 10-11 HCP without quick tricks/length in majors
-        //          if that bid can also indicate a good lead in the event your partner leads
-        //      4th hand - open any hand you would open in 1st or 2nd position
-        //          pass any borderline hand lacking strength in majors
-        //          maybe open a hand with strength in spades
-
-        boolean shouldBid = false;
-        boolean thirdHand = passes == 2;
-        boolean fourthHand = passes == 3;
-        Bid leadDirect = null;
-        if (hcPoints >= 14) {
-            LOGGER.info("  Sufficient HCP, needs nothing else to proceed");
-            shouldBid = true;
-        } else if ((hcPoints >= 12) && (quickTricks >= 2.0) && reBiddableSuit) {
-            LOGGER.info("  Good HCP, quick tricks, and reBiddable suit, proceeding");
-            shouldBid = true;
-        } else if (hcPoints >= 10) {
-            LOGGER.info("  Weak hand");
-            if (thirdHand) {
-                LOGGER.info("    3rd position");
-                if ((quickTricks >= 2.0) && reBiddableSuit && lengthInMajors) {
-                    LOGGER.info("    has quick tricks, reBiddable suit, length in majors.");
-                    shouldBid = true;
-                } else {
-                    LOGGER.info("    insufficient quick tricks, no reBiddable suit, or no length in majors");
-                    //  Do we have a lead direct? AKQ or AQJ four-long is good
-                    for (Map.Entry<Suit, Set<Card>> entry : hand._cardsBySuit.entrySet()) {
-                        Suit suit = entry.getKey();
-                        Set<Card> set = entry.getValue();
-                        if (set.size() >= 4) {
-                            if (set.contains(new Card(suit, Rank.ACE))
-                                && set.contains(new Card(suit, Rank.QUEEN))
-                                && (set.contains(new Card(suit, Rank.KING)) || set.contains(new Card(suit, Rank.JACK)))) {
-                                LOGGER.info("    has good direction for partner's opening lead.");
-                                leadDirect = new Bid.SuitBid(hand._position, 1, suit);
-                                shouldBid = true;
-                                break;
-                            }
-                        }
-                    }
-                    if (leadDirect == null) {
-                        LOGGER.info("    has no good suit for suggesting an opening lead.");
-                    }
-                }
-            } else if (fourthHand) {
-                LOGGER.info("    4th position");
-                if ((quickTricks >= 2.0) && reBiddableSuit && lengthInMajors && lengthInSpades) {
-                    LOGGER.info("    has quick tricks, reBiddable suit, length in majors esp. spades.");
-                    shouldBid = true;
-                } else {
-                    LOGGER.info("    insufficient quick tricks, no reBiddable suit, or no length in majors esp. spades.");
-                }
-            } else {
-                LOGGER.info("    1st or 2nd position");
-                if ((quickTricks >= 2.0) && reBiddableSuit && lengthInMajors) {
-                    LOGGER.info("    has quick tricks, rebiddable suit, length in majors.");
-                    shouldBid = true;
-                } else {
-                    LOGGER.info("    insufficient quick tricks, no rebiddable suit, or no length in majors.");
-                }
-            }
-        }
-
-        if (!shouldBid) {
-            LOGGER.info("  Recommending pass");
+        if (!shouldOpen(hand, sp, commentary)) {
+            commentary.add("Recommending pass");
             return new Bid.Pass(hand._position);
         }
 
-        if (leadDirect != null) {
-            LOGGER.info("  Recommending weak lead directing bid %s", leadDirect.toString());
-            return leadDirect;
+        if (sp._leadDirect != null) {
+            commentary.add(String.format("Recommending weak lead directing bid %s", sp._leadDirect.toString()));
+            return sp._leadDirect;
         }
 
         //  We have decided to bid.  What should we bid?
@@ -159,5 +106,81 @@ public class AmericanStandardSystem implements BiddingSystem {
         //      Definitely bid the lower if the next suit up is the singleton
 
         return new Bid.Pass(hand._position);
+    }
+
+    /**
+     *  Decide whether to open...
+     *  Open any hand with 14 or more HCP
+     *  Open any hand with 12-13 HCP, 2 quick tricks, and comfortable rebid (5-card suit)
+     *  Open any hand with 10-11 HCP, 2 quick tricks, comfortable rebid, and length in majors
+     *  Open 3rd position with 10-11 HCP without quick tricks/length in majors
+     *      if that bid can also indicate a good lead in the event your partner leads
+     *  4th hand - open any hand you would open in 1st or 2nd position
+     *      pass any borderline hand lacking strength in majors
+     *      maybe open a hand with strength in spades
+     */
+    private boolean shouldOpen(
+        final Hand hand,
+        final ScratchPad sp,
+        final List<String> commentary
+    ) {
+        if (sp._hcPoints >= 14) {
+            commentary.add("Sufficient HCP, needs nothing else to proceed");
+            return true;
+        }
+
+        if ((sp._hcPoints >= 12) && (sp._quickTricks >= 2.0) && sp._reBiddableSuit) {
+            commentary.add("Good HCP, quick tricks, and reBiddable suit, proceeding");
+            return true;
+        }
+
+        if (sp._hcPoints >= 10) {
+            if (sp._thirdHand) {
+                commentary.add("Weak hand, 3rd position...");
+                if ((sp._quickTricks >= 2.0) && sp._reBiddableSuit && sp._lengthInMajors) {
+                    commentary.add("has quick tricks, reBiddable suit, length in majors.");
+                    return true;
+                }
+
+                commentary.add("insufficient quick tricks, no reBiddable suit, or no length in majors");
+                //  Do we have a lead direct? AKQ or AQJ four-long is good
+                for (SuitSet suitSet : hand._distribution) {
+                    if (suitSet.size() >= 4) {
+                        if (suitSet.contains(new Card(suitSet._suit, Rank.ACE))
+                            && suitSet.contains(new Card(suitSet._suit, Rank.QUEEN))
+                            && (suitSet.contains(new Card(suitSet._suit, Rank.KING))
+                            || suitSet.contains(new Card(suitSet._suit, Rank.JACK)))) {
+                            commentary.add("has good direction for partner's opening lead.");
+                            sp._leadDirect = new Bid.SuitBid(hand._position, 1, suitSet._suit);
+                            return true;
+                        }
+                    }
+                }
+
+                commentary.add("has no good suit for suggesting an opening lead.");
+                return false;
+            } else if (sp._fourthHand) {
+                commentary.add("Weak hand, 4th position...");
+                if ((sp._quickTricks >= 2.0) && sp._reBiddableSuit && sp._lengthInMajors && sp._lengthInSpades) {
+                    commentary.add("has quick tricks, reBiddable suit, length in majors esp. spades.");
+                    return true;
+                }
+
+                commentary.add("insufficient quick tricks, no reBiddable suit, or no length in majors esp. spades.");
+                return false;
+            } else {
+                commentary.add("Weak hand, 1st or 2nd position");
+                if ((sp._quickTricks >= 2.0) && sp._reBiddableSuit && sp._lengthInMajors) {
+                    commentary.add("has quick tricks, rebiddable suit, length in majors.");
+                    return true;
+                }
+
+                commentary.add("insufficient quick tricks, no rebiddable suit, or no length in majors.");
+                return false;
+            }
+        }
+
+        commentary.add("Nothing worth bidding.");
+        return false;
     }
 }

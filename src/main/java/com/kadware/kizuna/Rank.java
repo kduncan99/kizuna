@@ -9,31 +9,31 @@ package com.kadware.kizuna;
  * Fairly trivial, but we do use this for a couple of ... useful purposes.
  */
 public enum Rank {
-    ACE(0, 4, "A"),
-    KING(1, 3, "K"),
-    QUEEN(2, 2, "Q"),
-    JACK(3, 1, "J"),
-    TEN(4, 0, "10"),
-    NINE(5, 0, "9"),
-    EIGHT(6, 0, "8"),
-    SEVEN(7, 0, "7"),
-    SIX(8, 0, "6"),
-    FIVE(9, 0, "5"),
-    FOUR(10, 0, "4"),
-    THREE(11, 0, "3"),
-    TWO(12, 0, "2");
+    ACE( 4, "A", 0),
+    KING( 3, "K", 1),
+    QUEEN( 2, "Q", 2),
+    JACK( 1, "J", 3),
+    TEN( 0, "10", 4),
+    NINE( 0, "9", 5),
+    EIGHT( 0, "8", 6),
+    SEVEN( 0, "7", 7),
+    SIX( 0, "6", 8),
+    FIVE( 0, "5", 9),
+    FOUR( 0, "4", 10),
+    THREE( 0, "3", 11),
+    TWO( 0, "2", 12);
 
     public final int _highCardPoints;
-    public final int _level;
     public final String _symbol;
+    public final int _sortOrder;
 
     Rank(
-        int level,
         int highCardPoints,
-        String symbol
+        String symbol,
+        int sortOrder
     ) {
         _highCardPoints = highCardPoints;
-        _level = level;
         _symbol = symbol;
+        _sortOrder = sortOrder;
     }
 }

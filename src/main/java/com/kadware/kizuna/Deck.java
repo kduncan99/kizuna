@@ -15,7 +15,7 @@ public class Deck {
 
     private final LinkedList<Card> _deck = new LinkedList<>();
     private final Random _random = new Random(System.currentTimeMillis());
-    private final Deck _instance = new Deck();
+    private static final Deck _instance = new Deck();
 
     public Deck() {
         for (Suit suit : Suit.values()) {
@@ -53,7 +53,7 @@ public class Deck {
         return result;
     }
 
-    public Deck getInstance() {
+    public static Deck getInstance() {
         return _instance;
     }
 

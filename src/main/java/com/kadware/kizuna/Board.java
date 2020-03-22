@@ -38,60 +38,25 @@ public class Board {
     public boolean establishBid(
         final Bid bid
     ) {
-        if (bid instanceof Bid.NoTrumpBid) {
-            Bid.NoTrumpBid ntBid = (Bid.NoTrumpBid) bid;
-            if (_highestBid instanceof Bid.NoTrumpBid) {
-                Bid.NoTrumpBid highest = (Bid.NoTrumpBid) _highestBid;
-                if (ntBid._level <= highest._level) {
-                    return false;
-                }
-            } else if (_highestBid instanceof Bid.SuitBid) {
-                Bid.SuitBid highest = (Bid.SuitBid) _highestBid;
-                if (ntBid._level < highest._level) {
-                    return false;
-                }
+        if ((_highestBid instanceof Bid.RealBid) && (bid instanceof Bid.RealBid)) {
+            if (((Bid.RealBid) bid).compareTo(_highestBid) <= 0) {
+                return false;
             }
-        } else if (bid instanceof Bid.SuitBid) {
-            Bid.SuitBid suitBid = (Bid.SuitBid) bid;
-            if (_highestBid instanceof Bid.NoTrumpBid) {
-                Bid.NoTrumpBid highest = (Bid.NoTrumpBid) _highestBid;
-                if (suitBid._level <= highest._level) {
-                    return false;
-                }
-            } else if (_highestBid instanceof Bid.SuitBid) {
-                Bid.SuitBid highest = (Bid.SuitBid) _highestBid;
-                if (suitBid._level < highest._level) {
-                    return false;
-                } else if (suitBid._level == highest._level) {
-                    if (!highest._suit.isLessThan(suitBid._suit)) {
-                        return false;
-                    }
-                }
-            }
-        } else if ((bid instanceof Bid.Double) && !doubleAllowed()) {
+        }
+
+        if ((bid instanceof Bid.Double) && !isDoubleAllowed(bid._position)) {
             return false;
-        } else if ((bid instanceof Bid.Redouble) && !redoubleAllowed()) {
+        }
+
+        if ((bid instanceof Bid.Redouble) && !isRedoubleAllowed(bid._position)) {
             return false;
+        }
+
+        if (bid instanceof Bid.RealBid) {
+            _highestBid = bid;
         }
 
         return true;
-    }
-
-    /**
-     * Is a DOUBLE bid allowed?  It is if there are 0 or 2 consecutive PASS bids after a NT or Suit bid
-     */
-    public boolean doubleAllowed() {
-        int passes = 0;
-        Iterator<Bid> iter = _bids.descendingIterator();
-        while (iter.hasNext()) {
-            Bid bid = iter.next();
-            if (!(bid instanceof Bid.Pass)) {
-                return (((passes == 0) || (passes == 2)) && ((bid instanceof Bid.SuitBid) || (bid instanceof Bid.NoTrumpBid)));
-            }
-            ++passes;
-        }
-
-        return false;
     }
 
     /**
@@ -123,6 +88,27 @@ public class Board {
         return result;
     }
 
+    public boolean isDoubleAllowed(
+        final Position position
+    ) {
+        return (_highestBid != null)
+            && ((_highestBid._position != position) || (_highestBid._position != position.getPartner()));
+    }
+
+    public boolean isDoubled() {
+        Iterator<Bid> iter = _bids.descendingIterator();
+        while (iter.hasNext()) {
+            Bid bid = iter.next();
+            if ((bid instanceof Bid.Double) || (bid instanceof Bid.Redouble)) {
+                return true;
+            } else if (!(bid instanceof Bid.Pass)) {
+                break;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Indicates whether the hand has been passed-out...
      * That is, either all four positions passed consecutively,
@@ -136,18 +122,22 @@ public class Board {
         }
     }
 
-    /**
-     * Is a REDOUBLE allowed? It is if there are zero or two consecutive PASS bids after a DOUBLE bid
-     */
-    public boolean redoubleAllowed() {
-        int passes = 0;
+    public boolean isRedoubleAllowed(
+        final Position position
+    ) {
+        return isDoubled()
+            && ((position == _highestBid._position) || (position.getPartner() == _highestBid._position));
+    }
+
+    public boolean isRedoubled() {
         Iterator<Bid> iter = _bids.descendingIterator();
         while (iter.hasNext()) {
             Bid bid = iter.next();
-            if (!(bid instanceof Bid.Pass)) {
-                return (((passes == 0) || (passes == 2)) && (bid instanceof Bid.Double));
+            if (bid instanceof Bid.Redouble) {
+                return true;
+            } else if (!(bid instanceof Bid.Pass)) {
+                break;
             }
-            ++passes;
         }
 
         return false;

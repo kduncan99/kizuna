@@ -4,6 +4,8 @@
 
 package com.kadware.kizuna;
 
+import java.util.List;
+
 public interface BiddingSystem {
 
     public static enum Name {
@@ -12,6 +14,7 @@ public interface BiddingSystem {
 
     public abstract Bid recommendBid(
         final Hand hand,
-        final Board biddingBoard
+        final Board biddingBoard,
+        final List<String> commentary
     );
 }
