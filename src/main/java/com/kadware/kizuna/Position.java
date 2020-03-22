@@ -5,10 +5,18 @@
 package com.kadware.kizuna;
 
 public enum Position {
-    SOUTH,
-    WEST,
-    NORTH,
-    EAST;
+    SOUTH("SOUTH"),
+    WEST("WEST"),
+    NORTH("NORTH"),
+    EAST("EAST");
+
+    private final String _descriptor;
+
+    Position(
+        final String descriptor
+    ) {
+        _descriptor = descriptor;
+    }
 
     Position getPartner() {
         switch (this) {
@@ -18,5 +26,10 @@ public enum Position {
             case WEST: return EAST;
         }
         return null;
+    }
+
+    @Override
+    public String toString() {
+        return _descriptor;
     }
 }

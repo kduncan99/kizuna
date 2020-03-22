@@ -10,9 +10,10 @@ public class Bid {
         _position = position;
     }
 
-    public class SuitBid extends Bid {
+    public static class SuitBid extends Bid {
         public final int _level;
         public final Suit _suit;
+
         SuitBid(
             final Position position,
             final int level,
@@ -22,10 +23,16 @@ public class Bid {
             _level = level;
             _suit = suit;
         }
+
+        @Override
+        public String toString() {
+            return String.format("%s:%d%s", _position.toString(), _level, _suit.toString());
+        }
     }
 
-    public class NoTrumpBid extends Bid {
+    public static class NoTrumpBid extends Bid {
         public final int _level;
+
         public NoTrumpBid(
             final Position position,
             final int level
@@ -33,32 +40,52 @@ public class Bid {
             super(position);
             _level = level;
         }
+
+        @Override
+        public String toString() {
+            return String.format("%s:%dNT", _position.toString(), _level);
+        }
     }
 
-    public class Double extends Bid {
+    public static class Double extends Bid {
 
         public Double(
             final Position position
         ) {
             super(position);
         }
+
+        @Override
+        public String toString() {
+            return String.format("%s:DOUBLE", _position.toString());
+        }
     }
 
-    public class Redouble extends Bid {
+    public static class Redouble extends Bid {
 
         public Redouble(
             final Position position
         ) {
             super(position);
         }
+
+        @Override
+        public String toString() {
+            return String.format("%s:REDOUBLE", _position.toString());
+        }
     }
 
-    public class Pass extends Bid {
+    public static class Pass extends Bid {
 
         public Pass(
             final Position position
         ) {
             super(position);
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%s:PASS", _position.toString());
         }
     }
 }

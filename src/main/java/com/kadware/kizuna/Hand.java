@@ -10,23 +10,16 @@ import java.util.Map;
 import java.util.Set;
 
 public class Hand {
-    public final Set<Card> _cards;
     public final Map<Suit, Set<Card>> _cardsBySuit = new HashMap<>();
-    public final Set<Card> _played;
     public final Position _position;
-    public final Set<Card> _remaining;
 
     public Hand(
         final Position position,
         final Set<Card> cards
     ) {
-        _cards = cards;
-        _played = new HashSet<>();
         _position = position;
-        _remaining = new HashSet<>(cards);
-
         for (Suit suit : Suit.values()) {
-            _cardsBySuit.put(suit, getContentBySuit(suit));
+            _cardsBySuit.put(suit, getContentBySuit(cards, suit));
         }
     }
 
@@ -35,9 +28,10 @@ public class Hand {
      */
     public int countHighCardPoints() {
         int result = 0;
-        //  High card points
-        for (Card card : _cards) {
-            result += card._rank._highCardPoints;
+        for (Set<Card> set : _cardsBySuit.values()) {
+            for (Card card : set) {
+                result += card._rank._highCardPoints;
+            }
         }
         return result;
     }
@@ -77,8 +71,9 @@ public class Hand {
         }
 
         //  Distribution points
-        for (Suit suit : Suit.values()) {
-            Set<Card> subHand = getContentBySuit(suit);
+        for (Map.Entry<Suit, Set<Card>> entry : _cardsBySuit.entrySet()) {
+            Suit suit = entry.getKey();
+            Set<Card> subHand = entry.getValue();
             if (subHand.size() == 0) {
                 //  void, usually worth 3 points
                 result += 3;
@@ -140,15 +135,17 @@ public class Hand {
      * Retrieves a subset of the hand, filtered to include only cards of the given suit
      * @param suit suit of interest
      */
-    private Set<Card> getContentBySuit(
+    private static Set<Card> getContentBySuit(
+        final Set<Card> cards,
         final Suit suit
     ) {
         Set<Card> result = new HashSet<>();
-        for (Card card : _cards) {
+        for (Card card : cards) {
             if (card._suit == suit) {
                 result.add(card);
             }
         }
+
         return result;
     }
 
@@ -157,5 +154,32 @@ public class Hand {
      */
     public Position getPartner() {
         return _position.getPartner();
+    }
+
+    public boolean hasFiveCardSuit() {
+        for (Set<Card> set : _cardsBySuit.values()) {
+            if (set.size() >= 5) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean hasLengthInMajors() {
+        int spades = _cardsBySuit.get(Suit.SPADES).size();
+        int hearts = _cardsBySuit.get(Suit.HEARTS).size();
+        return (spades + hearts) >= 8 && ((spades >= 5) || (hearts >= 5));
+    }
+
+    /**
+     * Determines if this hand has at least one long (5 or better) suit
+     */
+    public boolean hasLongSuit() {
+        for (Set<Card> cards : _cardsBySuit.values()) {
+            if (cards.size() >= 5) {
+                return true;
+            }
+        }
+        return false;
     }
 }
