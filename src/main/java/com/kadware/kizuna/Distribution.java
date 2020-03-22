@@ -4,9 +4,11 @@
 
 package com.kadware.kizuna;
 
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * Describes the entirety of a player's hand.
@@ -25,7 +27,7 @@ public class Distribution extends LinkedList<SuitSet> {
         final Set<Card> cards
     ) {
         //  Create a temporary container of directly-addressable-by-suit SuitSets.
-        HashMap<Suit, SuitSet> tempMap = new HashMap<>();
+        Map<Suit, SuitSet> tempMap = new TreeMap<>();
         for (Suit suit : Suit.values()) {
             tempMap.put(suit, new SuitSet(suit));
         }
@@ -38,15 +40,14 @@ public class Distribution extends LinkedList<SuitSet> {
         //  Load our list with the SuitSets, ordered by the length of each set - longest first
         _numericalDistribution = new int[4];
         int nx = 0;
-        for (int len = 13; len > 0; len--) {
+        for (int len = 13; len >= 0; len--) {
             for (SuitSet suitSet : tempMap.values()) {
                 if (suitSet.size() == len) {
-                    this.add(suitSet);
+                    add(suitSet);
                     _numericalDistribution[nx++] = len;
                 }
             }
         }
-
     }
 
     public String getDistributionString() {
@@ -76,9 +77,9 @@ public class Distribution extends LinkedList<SuitSet> {
      * Indicates whether the hand is balanced - i.e., 4-4-3-2, 4-3-3-3, 5-3-3-2
      */
     public boolean isBalanced() {
-        return (_numericalDistribution == ND_4_3_3_3)
-            || (_numericalDistribution == ND_4_4_3_2)
-            || (_numericalDistribution == ND_5_3_3_2);
+        return Arrays.equals(_numericalDistribution, ND_4_3_3_3)
+            || Arrays.equals(_numericalDistribution, ND_4_4_3_2)
+            || Arrays.equals(_numericalDistribution, ND_5_3_3_2);
     }
 
     @Override

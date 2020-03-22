@@ -53,6 +53,10 @@ public class Board {
         }
 
         if (bid instanceof Bid.RealBid) {
+            Bid.RealBid rb = (Bid.RealBid) bid;
+            if ((rb._level < 1) || (rb._level > 7)) {
+                throw new RuntimeException("Invalid level in Bid");
+            }
             _highestBid = bid;
         }
 

@@ -26,13 +26,11 @@ public class Hand {
      * Counts high-card points
      */
     public int countHighCardPoints() {
-        int result = 0;
+        int points = 0;
         for (SuitSet suitSet : _distribution) {
-            for (Card card : suitSet) {
-                result += card._rank._highCardPoints;
-            }
+            points += suitSet.countHighCardPoints();
         }
-        return result;
+        return points;
     }
 
     /**
@@ -144,7 +142,9 @@ public class Hand {
     public boolean hasLengthInMajors() {
         int spades = _distribution.getSuitSet(Suit.SPADES).size();
         int hearts = _distribution.getSuitSet(Suit.HEARTS).size();
-        return (spades + hearts) >= 8 && ((spades >= 5) || (hearts >= 5));
+        return ((spades >= 5) && (hearts >= 3))
+            || ((hearts >= 5) && (spades >= 3))
+            || ((hearts == 4) && (spades == 4));
     }
 
     /**

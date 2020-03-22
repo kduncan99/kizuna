@@ -10,16 +10,16 @@ import java.util.Map;
 
 public class Kizuna {
 
-    public static final int POINTS_FOR_MAJORS = 26;
-    public static final int POINTS_FOR_NOTRUMP = 26;
-    public static final int POINTS_FOR_MINORS = 29;
+    public static final int POINTS_FOR_GAME_MAJORS = 26;
+    public static final int POINTS_FOR_GAME_NOTRUMP = 26;
+    public static final int POINTS_FOR_GAME_MINORS = 29;
     public static final int POINTS_FOR_SMALL_SLAM = 33;
     public static final int POINTS_FOR_GRAND_SLAM = 37;
 
     public static void main(
         final String[] args
     ) {
-        BiddingSystem system = new AmericanStandardSystem();
+        BiddingSystem system = new AmericanStandardSystem(false);
         Board board = new Board();
         Deck deck = Deck.getInstance();
 
