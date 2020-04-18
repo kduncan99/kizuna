@@ -4,15 +4,13 @@
 
 package com.kadware.kizuna;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.Map;
 
 /**
  * This is the bidding board - contains the list of bids in order, and related information
  */
-public class Board {
+public class Board extends LinkedList<Bid> {
 
     public static class SuitMention {
         public Position _openedBy = null;   //  honestly opened by this person
@@ -20,9 +18,8 @@ public class Board {
         public boolean _rebid = false;      //  rebid by opener
     }
 
-    private final LinkedList<Bid> _bids = new LinkedList<>();
     public Bid _highestBid = null;          //  highest real bid so-far (not pass, double, redouble)
-    public final Map<Suit, SuitMention> _suitMentions = new HashMap<>();
+    public Bid _openingBid = null;          //  opening bid
 
     /**
      * Convenience wrapper
@@ -57,6 +54,9 @@ public class Board {
             if ((rb._level < 1) || (rb._level > 7)) {
                 throw new RuntimeException("Invalid level in Bid");
             }
+            if (_openingBid == null) {
+                _openingBid = bid;
+            }
             _highestBid = bid;
         }
 
@@ -68,7 +68,7 @@ public class Board {
      */
     public int getConsecutivePasses() {
         int passes = 0;
-        Iterator<Bid> iter = _bids.descendingIterator();
+        Iterator<Bid> iter = descendingIterator();
         while (iter.hasNext()) {
             Bid bid = iter.next();
             if (!(bid instanceof Bid.Pass)) {
@@ -84,9 +84,9 @@ public class Board {
      * Generate an array of strings to display the bidding
      */
     public String[] getDisplay() {
-        String[] result = new String[_bids.size()];
+        String[] result = new String[size()];
         int rx = 0;
-        for (Bid bid : _bids) {
+        for (Bid bid : this) {
             result[rx++] = bid.toString();
         }
         return result;
@@ -100,7 +100,7 @@ public class Board {
     }
 
     public boolean isDoubled() {
-        Iterator<Bid> iter = _bids.descendingIterator();
+        Iterator<Bid> iter = descendingIterator();
         while (iter.hasNext()) {
             Bid bid = iter.next();
             if ((bid instanceof Bid.Double) || (bid instanceof Bid.Redouble)) {
@@ -134,7 +134,7 @@ public class Board {
     }
 
     public boolean isRedoubled() {
-        Iterator<Bid> iter = _bids.descendingIterator();
+        Iterator<Bid> iter = descendingIterator();
         while (iter.hasNext()) {
             Bid bid = iter.next();
             if (bid instanceof Bid.Redouble) {

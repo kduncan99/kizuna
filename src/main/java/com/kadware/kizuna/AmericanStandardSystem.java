@@ -7,9 +7,11 @@ package com.kadware.kizuna;
 import java.util.Arrays;
 import java.util.List;
 
-public class AmericanStandardSystem implements BiddingSystem {
+public class AmericanStandardSystem extends BiddingSystem {
 
     public final boolean _fiveCardMajors;
+    public final boolean _invertedMinorRaise;   // see pg 54
+    public final boolean _staymanConvention;
 
     private static class ScratchPad {
         private int _hcPoints;
@@ -24,34 +26,23 @@ public class AmericanStandardSystem implements BiddingSystem {
     }
 
     public AmericanStandardSystem(
-        final boolean fiveCardMajors
+        final boolean fiveCardMajors,
+        final boolean invertedMinorRaise,
+        final boolean staymanConvention
     ) {
         _fiveCardMajors = fiveCardMajors;
+        _invertedMinorRaise = invertedMinorRaise;
+        _staymanConvention = staymanConvention;
     }
 
-    /**
-     * Recommends what the player holding the given hand should be at this point,
-     * as evidenced by the current content of the given bidding board.
-     * Do not call if the hand is passed out
-     */
-    @Override
-    public Bid recommendBid(
-        final Hand hand,
-        final Board biddingBoard,
-        final List<String> commentary
-    ) {
-        if (biddingBoard._highestBid == null) {
-            return recommendOpeningBid(hand, biddingBoard, commentary);
-        }
-
-        return new Bid.Pass(hand._position);
-    }
+    //  ----------------------------------------------------------------------------------------------------------------------------
 
     /**
      * Used for recommending an opening bid.
      * Called ONLY if the bidding board has three or fewer passes, and no real bids.
      */
-    private Bid recommendOpeningBid(
+    @Override
+    public Bid recommendOpeningBid(
         final Hand hand,
         final Board biddingBoard,
         final List<String> commentary
@@ -407,5 +398,35 @@ public class AmericanStandardSystem implements BiddingSystem {
 
         commentary.add("Nothing worth bidding.");
         return false;
+    }
+
+    //  ----------------------------------------------------------------------------------------------------------------------------
+
+    /**
+     * Used for recommending a response to a partner's opening bid.
+     * The opening bid *might* be doubled.
+     */
+    @Override
+    public Bid recommendOpeningResponse(
+        final Hand hand,
+        final Board biddingBoard,
+        final List<String> commentary
+    ) {
+        return null;    //TODO
+    }
+
+    //  ----------------------------------------------------------------------------------------------------------------------------
+
+    /**
+     * Used for recommending an overcall to an opponent's opening bid.
+     * The opening bid might be doubled and even redoubled, but it is the most recent real bid.
+     */
+    @Override
+    public Bid recommendOvercall(
+        final Hand hand,
+        final Board biddingBoard,
+        final List<String> commentary
+    ) {
+        return null;    //TODO
     }
 }
